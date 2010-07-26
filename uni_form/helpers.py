@@ -5,11 +5,9 @@
 """
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.forms.forms import BoundField
-from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from uni_form.util import BaseInput, Toggle, FieldRenderer, BaseLayoutObject
 
-
-from uni_form.util import BaseInput, Toggle
 
 class FormHelpersException(Exception):
     """ This is raised when building a form via helpers throws an error.
@@ -66,25 +64,8 @@ class Reset(BaseInput):
     input_type = 'reset'
     field_classes = 'reset resetButton'
 
-def render_field(field, form, template="uni_form/field.html", labelclass=None):
-    if not isinstance(field, str):
-        return field.render(form)
 
-    try:
-        field_instance = form.fields[field]
-    except KeyError:
-        raise Exception("Could not resolve form field '%s'." % field)
-    bound_field = BoundField(form, field_instance, field)
-    html = render_to_string(template, {'field': bound_field, 'labelclass': labelclass})
-    if not hasattr(form, 'rendered_fields'):
-        form.rendered_fields = []
-    if not field in form.rendered_fields:
-        form.rendered_fields.append(field)
-    else:
-        raise Exception("A field should only be rendered once: %s" % field)
-    return html
-
-class Layout(object):
+class Layout(BaseLayoutObject):
     '''
     Form Layout, add fieldsets, rows, fields and html
     
@@ -104,15 +85,16 @@ class Layout(object):
         self.fields = fields
     
     def render(self, form):
-        html = ""
+        render_fields = []
         for field in self.fields:
-            html += render_field(field, form)
+            render_fields.append(FieldRenderer(field, form))
         for field in form.fields.keys():
             if not field in form.rendered_fields:
-                html += render_field(field, form)
-        return html
+                render_fields.append(FieldRenderer(field, form))
+        return self.render_template({'fields': render_fields})
 
-class Fieldset(object):
+
+class Fieldset(BaseLayoutObject):
     
     ''' Fieldset container. Renders to a <fieldset>. '''
     
@@ -121,90 +103,42 @@ class Fieldset(object):
         self.legend = legend
         self.fields = fields
 
-    
-    def render(self, form):
-        if self.css:
-            html = u'<fieldset class="%s">' % self.css
-        else:
-            html = u'<fieldset>'
-        html += self.legend and (u'<legend>%s</legend>' % self.legend) or ''
-        for field in self.fields:
-            html += render_field(field, form)
-        html += u'</fieldset>'
-        return html
 
-
-
-class MultiField(object):
+class MultiField(BaseLayoutObject):
     ''' multiField container. Renders to a multiField <div> '''
 
     def __init__(self, label, *fields, **kwargs):
         #TODO: Decide on how to support css classes for both container divs
         self.div_class = kwargs.get('css_class', u'ctrlHolder')
         self.label_class = kwargs.get('label_class', u'blockLabel')
-        self.label_html = label and (u'<p class="label">%s</p>\n' % unicode(label)) or ''
+        self.label = unicode(label)
         self.fields = fields
 
     def render(self, form):
-        fieldoutput = u''
-        errors = u''
-        helptext = u''
-        count = 0
+        fields = []
         for field in self.fields:
-            fieldoutput += render_field(field, form, 'uni_form/multifield.html', self.label_class)
             try:
                 field_instance = form.fields[field]
             except KeyError:
                 raise Exception("Could not resolve form field '%s'." % field)
             bound_field = BoundField(form, field_instance, field)
-            auto_id = bound_field.auto_id
-            for error in bound_field.errors:
-                errors += u'<p id="error_%i_%s" class="errorField">%s</p>' % (count, auto_id, error)
-                count += 1
-            if bound_field.help_text:
-                helptext += u'<p id="hint_%s" class="formHint">%s</p>' % (auto_id, bound_field.help_text)
-
-        if errors:
-            self.css += u' error'
-
-        output = u'<div class="%s">\n' % self.div_class
-        output += errors
-        output += self.label_html
-        output += u'<div class="multiField">\n'
-        output += fieldoutput
-        output += u'</div>\n'
-        output += helptext
-        output += u'</div>\n'
-        return output
+            fields.append(bound_field)
+        return self.render_template({'fields': fields, 'multifield': self})
 
 
 
-class Row(object):
+class Row(BaseLayoutObject):
     ''' row container. Renders to a set of <div>'''
     def __init__(self, *fields, **kwargs):
         self.fields = fields
         self.css = kwargs.get('css_class', u'formRow')
 
-    def render(self, form):
-        output = u'<div class="%s">' % self.css
-        for field in self.fields:
-            output += render_field(field, form)
-        output += u'</div>'
-        return u''.join(output)
 
-
-class Column(object):
+class Column(Row):
     ''' column container. Renders to a set of <div>'''
     def __init__(self, *fields, **kwargs):
         self.fields = fields
         self.css = kwargs.get('css_class', u'formColumn')
-
-    def render(self, form):
-        output = u'<div class="%s">' % self.css
-        for field in self.fields:
-            output += render_field(field, form)
-        output += u'</div>'
-        return u''.join(output)
 
 
 class HTML(object):

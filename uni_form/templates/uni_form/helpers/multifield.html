@@ -1,0 +1,27 @@
+<div class="{{ multifield.div_class }}">
+    {% for field  in fields %}
+        {% if field.errors %}
+            {% for error in field.errors %}
+                {% include "uni_form/helpers/field_error.html" %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+    
+    {% if multifield.label %}
+        <p class="label">{{ multifield.label }}</p>
+    {% endif %}
+    
+    <div class="multiField">
+	    {% for field in fields %}
+	        {% with multifield.label_class as labelclass %}
+	           {% include "uni_form/multifield.html" %}
+            {% endwith %}
+	    {% endfor %}
+    </div>
+    
+    {% for field  in fields %}
+        {% if field.help_text %}
+            {% include "uni_form/helpers/help_text.html" %}
+        {% endif %}
+    {% endfor %}
+</div>

@@ -1,0 +1,4 @@
+<fieldset{% if fieldset.css %} class="{{ fieldset.css }}"{% endif %}>
+{% if fieldset.legend %}<legend>{{ fieldset.legend }}</legend>{% endif %}
+{% for field in fields %}{{ field.render }}{% endfor %}
+</fieldset>

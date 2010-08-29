@@ -162,4 +162,15 @@ def csrf_token_test(request):
     
     return render_to_response('test_app/generic_form_test.html', 
         response_dictionary, 
-        context_instance=RequestContext(request))    
+        context_instance=RequestContext(request))
+
+@csrf_exempt
+def back_to_the_template(request):
+    if request.method == "POST":
+        form = TestForm(request.POST)
+    else:
+        form = TestForm()
+    response_dictionary = {'form':form}
+    return render_to_response('test_app/back_to_the_template.html', 
+        response_dictionary, 
+        context_instance=RequestContext(request))

@@ -1,0 +1,4 @@
+<fieldset{% if classes %} class="{{ classes|join:' ' }}"{% endif %}>
+{% if legend %}<legend>{{ legend }}</legend>{% endif %}
+{{ inner|safe }}
+</fieldset>

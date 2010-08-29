@@ -1,0 +1,21 @@
+{% extends "test_app/base.html" %}
+
+{% load uf_tags %}
+
+{% block body %}
+	{% uf_form form "." "post" %}
+	    {% uf_fieldset "first-fieldset" %}
+		    {% uf_field "character_field" %}
+		{% uf_end_fieldset %}
+	    {% uf_fieldset "second-fieldset" %}
+	        {% uf_column %}
+	            {% uf_field "url_field" %}
+	            {% uf_field "textarea_field" %}
+	        {% uf_end_column %}
+	        {% uf_row %}
+	            {% uf_field "hidden_field" %}
+	            {% uf_field "file_field" %}
+	        {% uf_end_row %}
+	    {% uf_end_fieldset %}
+	{% uf_end_form %}
+{% endblock %}

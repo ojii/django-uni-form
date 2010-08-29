@@ -1,0 +1,3 @@
+<form action="{{ action }}" method="{{ method }}"{% if multipart %} enctype="multipart/form-data"{% endif %}{% if classes %}class="{{ classes|join:' ' }}"{% endif %}>
+    {{ inner|safe }}
+</form>
